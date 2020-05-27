@@ -3,6 +3,7 @@ import subprocess
 import ctypes
 from easygui import *
 from timeit import Timer
+from storage import Settings
 
 from win32comext.shell import shell, shellcon
 import win32api
@@ -19,26 +20,40 @@ def main():
 
     msg = 'Enter your network resource url. ie: \\\\Business\Files'
     title = 'Network Resource'
-    res = enterbox(msg, title, '', True)
-    if not res:
-        exit(1)
+    res = enterbox(msg, title, settings.targetServer, True)
 
+    while not res:
+        msgbox("Please provide a valid location.")
+        res = enterbox(msg, title, '', True)
 
+    settings.targetServer = res
+    settings.store()
 
-    term = 'tom'
+    fieldNames = ["First Name", "Last Name"]
+    fieldValues = [settings.firstName, settings.lastName]  # we start with blanks for the values
+    fieldValues = multenterbox(msg, title, fieldNames, fieldValues)
+    while not fieldValues[0] or not fieldValues[1]:
+        msgbox("Please provide both first and last names.")
+        fieldValues = multenterbox(msg, title, fieldNames)
+
+    settings.firstName = fieldValues[0]
+    settings.lastName = fieldValues[1]
+    settings.store()
+
     if False:
         dumbway(res, term)
     else:
-        path, files = find_files(res, term)
+        path, files = find_files(res, fieldValues[0], fieldValues[1])
         # t = Timer(lambda: find_files(res, term))
         # time = t.timeit(number=1)
         # print("time for find_files "+str(time))
         open_resource(path, files)
 
-def find_files(res, term):
+def find_files(res, term1, term2):
     derppath = ''
     derplist = []
-    filesonly = (e for e in os.scandir(res) if e.is_file() and term in e.name.lower().replace("_", " "))
+    # filesonly = (e for e in os.scandir(res) if e.is_file() and term1 in e.name.lower().replace("_", " "))
+    filesonly = (e for e in os.scandir(res) if e.is_file() and term1 == e.name.lower().split("_")[0]and term2 == e.name.lower().split("_")[1])
 
     for f in filesonly:
         derplist.append(f.path)
@@ -107,6 +122,7 @@ def creatfrompath(path, file):
 
     print('')
 
+
 def dumbway(res, term):
     filesonly = (e for e in os.scandir(res) if e.is_file() and term in e.name.lower().replace("_", " "))
     for f in filesonly:
@@ -114,13 +130,22 @@ def dumbway(res, term):
         # subprocess.Popen(r'explorer /select,'+f.path)
         subprocess.run([FILEBROWSER_PATH, '/select,', os.path.normpath(f.path)])
 
-if __name__ == "__main__":
-    # easygui.egdemo()
-    # derp2()
 
+def shat():
+    stramg = 'Tompson_mills_456_.pfd'
+    s1 = stramg.lower().replace('_',' ')
+
+
+
+if __name__ == "__main__":
     res = '\\\\KITCHEN\mike'
     term = "oct"
+    # settingsFilename = os.path.join("C:", "myApp", "settings.txt")  # Windows example
+    settingsName = str(os.path.basename(__file__).split('.')[0]) + '.cfg'
+    settingsFilename = os.path.join(os.getenv('LOCALAPPDATA'), settingsName)
 
+    settings = Settings(settingsFilename)
+    shat()
 
     # creatfrompath('','')
     main()
