@@ -1,0 +1,56 @@
+tom_foolery_345678_fastuff.pdf
+foolery_tom_78234982_blah.doc
+Tom_Foolery_13123_12312_fasdf.pdf
+Big_Bopper_Tompson_1234455_adf.pfd
+Tompson_mills_456_.pfd
+
+
+
+
+
+//Directory to open
+ITEMIDLIST *dir = ILCreateFromPath(_T("C:\\"));
+
+//Items in directory to select
+ITEMIDLIST *item1 = ILCreateFromPath(_T("C:\\Program Files\\"));
+ITEMIDLIST *item2 = ILCreateFromPath(_T("C:\\Windows\\"));
+const ITEMIDLIST* selection[] = {item1,item2};
+UINT count = sizeof(selection) / sizeof(ITEMIDLIST);
+
+//Perform selection
+SHOpenFolderAndSelectItems(dir, count, selection, 0);
+
+//Free resources
+ILFree(dir);
+ILFree(item1);
+ILFree(item2);
+
+
+
+
+
+
+
+pyarr = [1, 2, 3, 4]
+arr = (ctypes.c_int * len(pyarr))(*pyarr)
+
+
+
+
+
+
+from win32com.shell import shell, shellcon
+
+def launch_file_explorer(path, files):
+    '''Given a absolute base path and names of its children (no path), open up one File Explorer window with all the child files selected'''
+    folder_pidl = shell.SHILCreateFromPath(path,0)[0]
+    desktop = shell.SHGetDesktopFolder()
+    shell_folder = desktop.BindToObject(folder_pidl, None, shell.IID_IShellFolder)
+    name_to_item_mapping = dict([(desktop.GetDisplayNameOf(item, 0), item)
+    for item in shell_folder])
+        to_show = []
+        for file in files:
+            if not name_to_item_mapping.has_key(file):
+                raise Exception('File: "%s" not found in "%s"' % (file, path))
+            to_show.append(name_to_item_mapping[file])
+        shell.SHOpenFolderAndSelectItems(folder_pidl, to_show, 0)
