@@ -13,6 +13,7 @@ class Settings(EgStore):
         self.targetServer = ""
         self.firstName = ""
         self.lastName = ""
+        self.ignoreCase = "False"
 
         #-------------------------------------------------
         # For subclasses of EgStore, these must be

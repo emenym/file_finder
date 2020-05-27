@@ -53,7 +53,12 @@ def find_files(res, term1, term2):
     derppath = ''
     derplist = []
     # filesonly = (e for e in os.scandir(res) if e.is_file() and term1 in e.name.lower().replace("_", " "))
-    filesonly = (e for e in os.scandir(res) if e.is_file() and term1 == e.name.lower().split("_")[0]and term2 == e.name.lower().split("_")[1])
+    if settings.ignoreCase == "True":
+        filesonly = (e for e in os.scandir(res)
+                     if e.is_file() and term1 == e.name.lower().split("_")[0] and term2 == e.name.lower().split("_")[1].split('.')[0])
+    else:
+        filesonly = (e for e in os.scandir(res)
+                     if e.is_file() and term1 == e.name.split("_")[0]and term2 == e.name.split("_")[1].split('.')[0])
 
     for f in filesonly:
         derplist.append(f.path)
@@ -136,10 +141,16 @@ def shat():
     s1 = stramg.lower().replace('_',' ')
 
 
+    list1 = os.listdir(settings.targetServer)
+    for i in list1:
+        drep = i.split('_')
+        if settings.firstName == drep[0].split("_")[0] and settings.lastName == drep[1].split("_")[0].split('.')[0]:
+            print("asdf")
+
+
+
 
 if __name__ == "__main__":
-    res = '\\\\KITCHEN\mike'
-    term = "oct"
     # settingsFilename = os.path.join("C:", "myApp", "settings.txt")  # Windows example
     settingsName = str(os.path.basename(__file__).split('.')[0]) + '.cfg'
     settingsFilename = os.path.join(os.getenv('LOCALAPPDATA'), settingsName)
