@@ -3,6 +3,7 @@ import subprocess
 from easygui import *
 from storage import Settings
 from win32comext.shell import shell, shellcon
+import sys
 
 
 FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
@@ -50,6 +51,8 @@ def do_find():
     settings.targetServer = res
     settings.store()
 
+    msg = 'Enter first and last names for search'
+    title = 'Search Names'
     fieldNames = ["First Name", "Last Name"]
     fieldValues = [settings.firstName, settings.lastName]
     fieldValues = multenterbox(msg, title, fieldNames, fieldValues)
@@ -73,12 +76,20 @@ def do_find():
 
 def find_files(res, term1, term2):
     derplist = []
-    if settings.caseSensitive == "False":
-        filesonly = (e for e in os.scandir(res)
-                     if e.is_file() and term1 == e.name.lower().split("_")[0] and term2 == e.name.lower().split("_")[1].split('.')[0])
-    else:
-        filesonly = (e for e in os.scandir(res)
-                     if e.is_file() and term1 == e.name.split("_")[0]and term2 == e.name.split("_")[1].split('.')[0])
+    filesonly = []
+    for file in os.scandir(res):
+        last = file.name.split("_")[0]
+        try:
+            first = file.name.split("_")[1].split('.')[0]
+        except IndexError:
+            first = ''
+
+        if settings.caseSensitive == "False":
+            first = first.lower()
+            last = last.lower()
+
+        if file.is_file() and term1 == first and term2 == last:
+            filesonly.append(file)
 
     for f in filesonly:
         derplist.append(f.path)
@@ -138,4 +149,8 @@ if __name__ == "__main__":
     settingsName = str(os.path.basename(__file__).split('.')[0]) + '.cfg'
     settingsFilename = os.path.join(os.getenv('LOCALAPPDATA'), settingsName)
     settings = Settings(settingsFilename)
+
+
+
+
     main()
