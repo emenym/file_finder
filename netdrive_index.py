@@ -11,18 +11,41 @@ import win32api
 FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
 def main():
-    print("main")
-    debug = False
-    if debug:
-        res = 'test'
-    else:
-        res = '\\\\KITCHEN\mike'
+    msg = 'Select an action'
+    title = 'Derp'
+    findAction = 'Find Files'
+    settingsAction = 'Change a setting'
+    exitAction = 'Exit'
+    actionList = [findAction, settingsAction, exitAction]
+    action = choicebox(msg, title, actionList)
 
+    while 1:
+        while not action:
+            action = choicebox(msg, title, actionList)
+
+        if action == findAction:
+            do_find()
+            action = False
+        elif action == settingsAction:
+            change_settings()
+            action = None
+        elif action == exitAction:
+            exit(0)
+        else:
+            exceptionbox('Unknown action', 'Error')
+            exit(1)
+
+
+
+
+def do_find():
     msg = 'Enter your network resource url. ie: \\\\Business\Files'
     title = 'Network Resource'
     res = enterbox(msg, title, settings.targetServer, True)
 
     while not res:
+        if res is None:
+            return
         msgbox("Please provide a valid location.")
         res = enterbox(msg, title, '', True)
 
@@ -50,10 +73,9 @@ def main():
         open_resource(path, files)
 
 def find_files(res, term1, term2):
-    derppath = ''
     derplist = []
     # filesonly = (e for e in os.scandir(res) if e.is_file() and term1 in e.name.lower().replace("_", " "))
-    if settings.ignoreCase == "True":
+    if settings.caseSensitive == "False":
         filesonly = (e for e in os.scandir(res)
                      if e.is_file() and term1 == e.name.lower().split("_")[0] and term2 == e.name.lower().split("_")[1].split('.')[0])
     else:
@@ -66,10 +88,8 @@ def find_files(res, term1, term2):
         msgbox("No files found")
         exit(1)
     derppath = os.path.dirname(derplist[0])
-    # print(derppath)
     for i in range(len(derplist)):
         derplist[i] = os.path.basename(derplist[i])
-    # print(derplist)
     return derppath, derplist
 
 
@@ -78,6 +98,23 @@ def open_resource(path, files):
     print("time for launch file explorer "+str(t.timeit(number=1)))
 
 
+def change_settings():
+    settingsList = {'Case Sensitive': settings.caseSensitive}
+
+    msg = 'Settings'
+    title = 'Settings'
+    newSettings = multenterbox(msg, title, list(settingsList.keys()), list(settingsList.values()))
+    if newSettings is None:
+        return
+    settings.caseSensitive = evalStringTruth(newSettings[0])
+    settings.store()
+
+
+def evalStringTruth(str):
+    if str.lower() in ['true, True', 'yes', 'y', '1']:
+        return 'True'
+    else:
+        return 'False'
 
 def derp2():
     path = '\\\\KITCHEN\mike'
@@ -151,6 +188,7 @@ def shat():
 
 
 if __name__ == "__main__":
+    # egdemo()
     # settingsFilename = os.path.join("C:", "myApp", "settings.txt")  # Windows example
     settingsName = str(os.path.basename(__file__).split('.')[0]) + '.cfg'
     settingsFilename = os.path.join(os.getenv('LOCALAPPDATA'), settingsName)
