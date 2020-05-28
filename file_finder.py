@@ -8,7 +8,7 @@ from time import sleep
 
 FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
-# To build: with venv active: pyinstaller --noconsole --onefile --noconfirm  netdrive_index.py
+# To build: with venv active: pyinstaller --noconsole --onefile --noconfirm  file_finder.py
 def main():
     msg = 'Select an action'
     title = 'File Finder'
