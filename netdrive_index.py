@@ -1,10 +1,10 @@
 import os
 import subprocess
-from easygui import *
+from easygui import choicebox, exceptionbox, enterbox, msgbox, multenterbox
 from storage import Settings
 from win32comext.shell import shell, shellcon
-import sys
-
+import collections
+from time import sleep
 
 FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
@@ -64,45 +64,51 @@ def do_find():
     settings.lastName = fieldValues[1]
     settings.store()
 
-    if False:
-        dumbway(res, term)
-    else:
-        path, files = find_files(res, fieldValues[0], fieldValues[1])
-        if not files:
-            msgbox("No files found")
-            return
-        open_resource(path, files)
+    filesDict = find_files(fieldValues[0], fieldValues[1])
+    if not filesDict:
+        msgbox("No files found")
+        return
+    launch_files_recursive(filesDict)
 
 
-def find_files(res, term1, term2):
-    derplist = []
+def find_files(term1, term2):
+    pathsonly = []
     filesonly = []
-    for file in os.scandir(res):
-        last = file.name.split("_")[0]
-        try:
-            first = file.name.split("_")[1].split('.')[0]
-        except IndexError:
-            first = ''
+    filesDict = collections.defaultdict(list)
 
-        if settings.caseSensitive == "False":
-            first = first.lower()
-            last = last.lower()
+    for root, dirs, files in os.walk(settings.targetServer, topdown=True):
+        for file in files:
+            last = file.split("_")[0]
+            try:
+                first = file.split("_")[1].split('.')[0]
+            except IndexError:
+                first = ''
 
-        if file.is_file() and term1 == first and term2 == last:
-            filesonly.append(file)
+            if settings.caseSensitive == "False":
+                first = first.lower()
+                last = last.lower()
 
-    for f in filesonly:
-        derplist.append(f.path)
-    if not derplist:
-        return res, []
-    derppath = os.path.dirname(derplist[0])
-    for i in range(len(derplist)):
-        derplist[i] = os.path.basename(derplist[i])
-    return derppath, derplist
+            if term1 == first and term2 == last:
+                pathsonly.append(root)
+                filesonly.append(file)
+                filesDict[root].append(file)
+
+    return filesDict
 
 
-def open_resource(path, files):
-    launch_file_explorer(path, files)
+def launch_files_recursive(filesDict):
+    for path in filesDict.keys():
+        folder_pidl = shell.SHILCreateFromPath(path, 0)[0]
+        desktop = shell.SHGetDesktopFolder()
+        shell_folder = desktop.BindToObject(folder_pidl, None, shell.IID_IShellFolder)
+        name_to_item_mapping = dict([(desktop.GetDisplayNameOf(item, 1), item) for item in shell_folder])
+        to_show = []
+        for file in filesDict[path]:
+            if file not in name_to_item_mapping:
+                raise Exception('File: "%s" not found in "%s"' % (file, path))
+            to_show.append(name_to_item_mapping[file])
+            shell.SHOpenFolderAndSelectItems(folder_pidl, to_show, 0)
+            sleep(0.1)
 
 
 def change_settings():
@@ -138,19 +144,9 @@ def launch_file_explorer(path, files):
         shell.SHOpenFolderAndSelectItems(folder_pidl, to_show, 0)
 
 
-def dumbway(res, term):
-    filesonly = (e for e in os.scandir(res) if e.is_file() and term in e.name.lower().replace("_", " "))
-    for f in filesonly:
-        print(f.path)
-        subprocess.run([FILEBROWSER_PATH, '/select,', os.path.normpath(f.path)])
-
-
 if __name__ == "__main__":
     settingsName = str(os.path.basename(__file__).split('.')[0]) + '.cfg'
     settingsFilename = os.path.join(os.getenv('LOCALAPPDATA'), settingsName)
     settings = Settings(settingsFilename)
-
-
-
 
     main()
