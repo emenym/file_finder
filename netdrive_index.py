@@ -1,14 +1,13 @@
 import os
 import subprocess
 from easygui import *
-from timeit import Timer
 from storage import Settings
 from win32comext.shell import shell, shellcon
 
 
 FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
-
+# To build: with venv active: pyinstaller --noconsole --onefile --noconfirm  netdrive_index.py
 def main():
     msg = 'Select an action'
     title = 'File Finder'
@@ -21,7 +20,7 @@ def main():
     while 1:
         while not action:
             if action is None:
-                exit(0)
+                return
             action = choicebox(msg, title, actionList)
 
         if action == findAction:
@@ -31,10 +30,10 @@ def main():
             change_settings()
             action = False
         elif action == exitAction:
-            exit(0)
+            return
         else:
             exceptionbox('Unknown action', 'Error')
-            exit(1)
+            return
 
 
 def do_find():
@@ -92,8 +91,7 @@ def find_files(res, term1, term2):
 
 
 def open_resource(path, files):
-    t = Timer(lambda: launch_file_explorer(path, files))
-    print("time for launch file explorer "+str(t.timeit(number=1)))
+    launch_file_explorer(path, files)
 
 
 def change_settings():
